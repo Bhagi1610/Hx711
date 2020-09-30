@@ -1,0 +1,72 @@
+/*This code was originally authored by Ant Elder as an example of how to publish data to IBM Waton IoT Service
+ * A small piece of code was added by Henri Lacoste to allow a data stream from his IoT Scale
+ * 
+ * 
+ * Original Author: Ant Elder
+ * Original License: Apache License v2
+ */
+#include <ESP8266WiFi.h>
+#include <PubSubClient.h> // https://github.com/knolleary/pubsubclient/releases/tag/v2.3
+
+#include "HX711.h" //Load Cell Amplifier
+HX711 cell(D3, D2); //Amplifier is connected to these pins on the NodeMCU ESP8266 Board
+
+ 
+//-------- Customise these values -----------
+
+#define WLAN_SSID       "your_network_name"  //Put your SSID here
+#define WLAN_PASS       "your_network_password"  //Put you wifi password here
+ 
+#define ORG "your_organisation_ID"
+#define DEVICE_TYPE "your_device_type"
+#define DEVICE_ID "your_device_ID"
+#define TOKEN "your_token"
+//-------- Customise the above values --------
+ 
+char server[] = ORG ".messaging.internetofthings.ibmcloud.com";
+char topic[] = "iot-2/evt/status/fmt/json";
+char authMethod[] = "use-token-auth";
+char token[] = TOKEN;
+char clientId[] = "d:" ORG ":" DEVICE_TYPE ":" DEVICE_ID;
+ 
+ 
+void setup() {
+
+
+  
+ Serial.begin(115200);
+ Serial.println();
+ 
+}
+ 
+int counter = 0;
+ 
+void loop() {
+ 
+ 
+
+
+//----------Get data from load cell and amplifier
+ 
+  long valCalibrated = 0;
+  long val = 0;
+  float count = 0;
+
+
+  count = count + 1;
+  val = 0.5 * val    +   0.5 * cell.read();
+  valCalibrated =  ((val - 4137240) / 234.20)-179;
+  
+//----------Send data to IBM Waton IoT Service
+
+ String payload = "{\"d\":{\"weight\":";
+ payload += valCalibrated;
+ payload += "}}";
+ 
+ Serial.print("Sending payload: ");
+ Serial.println(payload);
+  
+ 
+ ++counter;
+ delay(100); //adjust delay to send more or less reads per unit time
+}
